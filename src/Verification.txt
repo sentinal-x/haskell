@@ -1,0 +1,86 @@
+exec (acomp a) (0,s,[]) == (length (acomp a), s, [aval a s])
+
+Proof:
+
+Base case: a = (N x)
+
+exec (acomp a) (0,s,[]) = 
+[substitute a] = exec (acomp (N x)) (0,s,[])
+[applying acomp] = exec [LOADI x] (0, s,[])
+[applying exec [LOADI x]] = (1, s, [x])
+
+(length (acomp a), s, [aval a s]) = 
+[substitute a] = (length (acomp (N x)), s, [aval (N x) s])
+[applying acomp] = (length ([LOADI x]), s, [aval (N x) s])
+[applying aval] = (length ([LOADI x]), s, [x]) 
+[applying length] = (1, s, [x])
+
+For a = (N x), exec (acomp a) (0,s,[]) == (length (acomp a), s, [aval a s])
+
+Base case: a = (V v)
+
+exec (acomp a) (0,s,[]) = 
+[substitute a] = exec (acomp (V v)) (0,s,[]) 
+[applying acomp] = exec [LOAD v] (0, s,[])
+[applying exec [LOAD v]] = (1, s, [v])
+
+(length (acomp a), s, [aval a s]) = 
+[substitute a] = (length (acomp (V v)), s, [aval (V v) s]) 
+[applying acomp] = (length ([LOAD v]), s, [aval (V v) s])
+[applying aval] = (length ([LOAD v]), s, [v]) 
+[applying length] = (1, s, [v])
+
+For a = (V v), exec (acomp a) (0,s,[]) == (length (acomp a), s, [aval a s])
+
+Inductive case: a = (Plus a1 a2)
+
+exec (acomp a) (0,s,[]) =
+[substitute a] = exec (acomp (Plus a1 a2)) (0,s,[]) = 
+[applying acomp] = exec [acomp (a1) s, acomp (a2) s, ADD] (0, s,[]) 
+[rearrange] = exec [ADD] (exec (acomp (a2)) (exec (acomp (a1)) (0, s,[])))
+
+Now we have proved that exec (acomp (a)) (0, s,[]) == (length (acomp a), s, [aval a s]) for both base cases a = (N x) and a = (V v). For this proof we will use the base case a1 and a2 = (N x) but we have proved prior that this works for any combination of base cases for a1 and a2:
+
+[substitute a] = exec [ADD] (exec (acomp (N x)) (exec (acomp (N x)) (0, s,[])))
+[applying acomp] = exec [ADD] (exec [LOADI x] (exec [LOADI x] (0, s,[])))
+[applying exec [LOADI x]] = exec [ADD] (exec [LOADI x] (1, s, [x]))
+[applying exec [LOADI x]] = exec [ADD] (2, s, [x,x])
+[applying exec [ADD]] = (3, s, [x+x])
+
+(length (acomp a), s, [aval a s]) =
+[substitute a] = (length (acomp (Plus a1 a2)), s, [aval (Plus a1 a2) s])
+[applying acomp] = (length ([acomp (a1), acomp (a2), ADD]), s, [aval (Plus a1 a2) s])
+[applying aval] = (length ([acomp (a1), acomp (a2), ADD]), s, [(aval a1 s) + (aval a2 s)]) 
+
+Now we substitute in the base cases for each combination of a1 and a2: 
+
+Case: a1, a2 = (N x):
+[substitution] = (length ([acomp (N x), acomp (N x), ADD]), s, [(aval (N x) s) + (aval (N x) s)]) 
+[applying acomp] = (length ([LOADI x, LOADI x, ADD]), s, [(aval (N x) s) + (aval (N x) s)])
+[applying aval] = (length ([LOADI x, LOADI x, ADD]), s, [x+x])
+[applying length] = (3, s, [x+x])
+
+Case a1, a2 = (V v):
+[substitution] = (length ([acomp (V v), acomp (V v), ADD]), s, [(aval (V v) s) + (aval (V v) s)])
+[applying acomp] = (length ([LOAD v, LOAD v, ADD]), s, [(aval (V v) s) + (aval (V v) s)]) 
+[applying aval] = (length ([LOAD v, LOAD v, ADD]), s, [v+v])
+[applying length] = (3, s, [v+v])
+
+Case a1 = (V v), a2 = (N x):
+[substitution] = (length ([acomp (V v), acomp (N x), ADD]), s, [(aval (V v) s) + (aval (N x) s)]) 
+[applying acomp] = (length ([LOAD v, LOADI x, ADD]), s, [(aval (V v) s) + (aval (N x) s)]) 
+[applying aval] = (length ([LOAD v, LOADI x, ADD]), s, [v+x]) 
+[applying length] = (3, s, [v+x])
+
+
+Case a1 = (N x), a2 = (V v):
+[substitution] = (length ([acomp (N x), acomp (V v), ADD]), s, [(aval (N x) s) + (aval (V v) s)])
+[applying acomp] = (length ([LOADI x, LOAD v, ADD]), s, [(aval (N x) s) + (aval (V v) s)]) 
+[applying aval] = (length ([LOADI x, LOAD v, ADD]), s, [x+v]) =
+[applying length] = (3, s, [x+v])
+
+So for all bases cases we get:
+
+(3, s, [n+n]) where n is either base case (N x) or (V v). This matches the first half of the equality (exec (acomp a) (0,s,[])). So for a = (Plus a1 a2) where a1 and a2 are base cases, exec (acomp a) (0,s,[]) == (length (acomp a), s, [aval a s])
+
+Therefore we can use proof by induction to prove that exec (acomp a) (0,s,[]) == (length (acomp a), s, [aval a s]) for all values of a. 
